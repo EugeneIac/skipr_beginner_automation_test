@@ -1,0 +1,52 @@
+name: 💻 API tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      EXPECTED_ID_TEST_1:
+        type: number
+        description: "Enter expected id for test 1"
+        default: 1
+        required: true
+      EXPECTED_ID_TEST_2:
+        type: number
+        description: "Enter expected id for test 2"
+        default: 2
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Update EXPECTED_ID_TEST_1 and EXPECTED_ID_TEST_2 in JSON file
+        run: |
+          echo "Starting the workflow to update values in JSON file"
+          echo "New EXPECTED_ID_TEST_1 value: ${{ github.event.inputs.EXPECTED_ID_TEST_1 }}"
+          echo "New EXPECTED_ID_TEST_2 value: ${{ github.event.inputs.EXPECTED_ID_TEST_2 }}"
+          
+          sed -i "s/\"EXPECTED_ID_TEST_1\": [0-9]\+/\"EXPECTED_ID_TEST_1\": ${{ github.event.inputs.EXPECTED_ID_TEST_1 }}/" ./env.json
+          sed -i "s/\"EXPECTED_ID_TEST_2\": [0-9]\+/\"EXPECTED_ID_TEST_2\": ${{ github.event.inputs.EXPECTED_ID_TEST_2 }}/" ./env.json
+          
+          echo "Updated env.json:"
+          cat ./env.json
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Archive artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: ./test-report
